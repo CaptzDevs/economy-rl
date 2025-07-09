@@ -11,6 +11,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+
+    "@tensorflow/tfjs": "^4.22.0",
     "nodemon": "^3.1.10"
   }
 }

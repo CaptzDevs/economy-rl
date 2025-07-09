@@ -1,5 +1,5 @@
 export function updateState(citizen) {
-  citizen.state.hunger = Math.max(0, citizen.state.hunger - 5);
+  citizen.state.hunger = Math.max(0, citizen.state.hunger - 2);
   citizen.state.energy = Math.max(
     0,
     citizen.state.energy - (citizen._decision !== 'idle' && (citizen.job !== 'none' ? 1.5 : 0.5))
@@ -7,8 +7,8 @@ export function updateState(citizen) {
   citizen.state.social = Math.max(0, (citizen.state.social ?? 100) - 0.3);
 
   // อัปเดต health ด้วยฟังก์ชันแยก
-  citizen.state.health = calculateHealth(citizen.state);
-  citizen.state.happiness = calculateHappiness(citizen.state);
+  citizen.state.health = calculateHealth(citizen);
+  citizen.state.happiness = calculateHappiness(citizen);
   citizen.alive = checkIsAlive(citizen)
 
   
@@ -26,22 +26,47 @@ function checkIsAlive (citizen) {
 
 }
 
-function calculateHealth(state) {
-  let health = state.health ?? 100;
+function calculateHealth(citizen) {
+  let health = citizen.state.health ?? 100;
+  let baseHealthDecay = 4 * (citizen.age*0.2)
+  const hunger = citizen.state.hunger ?? 100;  // 0 = หิวสุด, 100 = อิ่ม
+  const energy = citizen.state.energy ?? 100;  // 0 = หมดแรง
+  const social = citizen.state.social ?? 100;  // 0 = โดดเดี่ยว
 
-  if (state.hunger > 80 || state.energy < 20 || state.social < 20) {
-    health = Math.max(0, health - 1);
-  } else if (state.hunger < 50 && state.energy > 70 && state.social > 50) {
-    health = Math.min(100, health + 0.5);
+  // เงื่อนไขเสื่อมสุขภาพ
+  if (hunger < 20) {
+    health -= baseHealthDecay; // หิวมาก
+  } else if (hunger < 50) {
+    health -= baseHealthDecay; // เริ่มหิว
   }
-  
+  if (energy < 10) {
+    health -= 2; // พลังงานต่ำ
+  }
+
+  if(hunger > 0 && energy > 0 ) {
+      // เงื่อนไขฟื้นฟูสุขภาพ
+  if (hunger > 70 ) {
+    health += 4; // สมดุลชีวิตดี
+  }
+  if (energy > 70) {
+    health += 4; // สมดุลชีวิตดี
+  } 
+   if (hunger > 50 && energy > 50) {
+    health += 4;
+  }
+  }
+
+  // จำกัดค่าให้อยู่ในช่วง 0-100
+  health = Math.max(0, Math.min(100, health));
+
   return health;
 }
 
-function calculateHappiness(state) {
-  const hungerPenalty = state.hunger > 70 ? -20 : 0;
-  const energyBonus = state.energy > 60 ? 10 : -10;
-  const socialBonus = state.social > 50 ? 10 : 0;
+
+function calculateHappiness(citizen) {
+  const hungerPenalty = citizen.state.hunger > 70 ? -20 : 0;
+  const energyBonus = citizen.state.energy > 60 ? 10 : -10;
+  const socialBonus = citizen.state.social > 50 ? 10 : 0;
 
   return Math.max(0, Math.min(100, 50 + hungerPenalty + energyBonus + socialBonus));
 }

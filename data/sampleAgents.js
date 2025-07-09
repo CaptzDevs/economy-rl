@@ -6,11 +6,11 @@ export const citizens = [
     role: 'citizen',
     job: 'worker',
     age: 23,
-    name: 'Alice',
+    name: 'Agent',
     money: 100,
-    state: { hunger: 60 },
+    state: { hunger: 100 },
     inventory: { food: 1 },
     personality: { laziness: 0.4, greed: 0.7, thriftiness: 0.2 },
-    strategy: 'bt'
+    strategy: 'dqn'
   })
 ];
