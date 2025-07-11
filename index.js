@@ -18,7 +18,7 @@ async function runSimulation(steps = 10, delay = 500, callback) {
       break;
     }
 
-    console.clear();
+    /* console.clear(); */
     callback(i)
     console.log(`📆 Tick ${i + 1} | เหลือ ${aliveCitizens.length} คน`);
     await tick(aliveCitizens);  // รอ tick ทำงานเสร็จ (รองรับ async)
@@ -83,7 +83,7 @@ async function runDQN() {
 
 }
 
-runDQN()
+//runDQN()
 
 
 async function runNN() {
