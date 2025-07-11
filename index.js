@@ -1,8 +1,12 @@
 import { citizens } from './data/sampleAgents.js';
 import { tick } from './sim/tick.js';  // ต้องเป็น async function
-import { initDQN } from './strategy/dqn.js';
+import { getQModel, initDQN, loadModel, saveModel } from './strategy/dqn.js';
 import { trainFromLogs, setTrainedModel } from './strategy/neuralTf.js';
 import fs from 'fs';
+import { loadJSON, saveJSON } from './utils/file.js';
+import chalk from 'chalk';
+
+const result_path = './model/modelResult.json'
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -18,7 +22,7 @@ async function runSimulation(steps = 10, delay = 500, callback) {
       break;
     }
 
-    /* console.clear(); */
+    console.clear();
     callback(i)
     console.log(`📆 Tick ${i + 1} | เหลือ ${aliveCitizens.length} คน`);
     await tick(aliveCitizens);  // รอ tick ทำงานเสร็จ (รองรับ async)
@@ -33,57 +37,112 @@ async function runSimulation(steps = 10, delay = 500, callback) {
 
 
 
-async function runDQN() {
-  initDQN();  // เริ่มด้วยการสร้างโมเดล DQN ก่อนใช้
-  const sum = []
-  const rewards = []
-  let oldMoney = 0
-  for (let index = 0; index < 5; index++) {
+async function runDQN( epochs = 3) {
+  for (let epoch = 0; epoch < epochs; epoch++) {
+  const sum = [];
+  const rewards = [];
+  let oldMoney = 0;
+  let isFirstTrain = true
+  try {
+    console.log('💾 Loading Exist model...');
+    await sleep(3000)
+    await loadModel(); // ✅ โหลดโมเดลเดิม ถ้ามี
+    isFirstTrain = false
 
-  citizens.forEach(c => {
-    c.strategy = 'dqn'; // ตอนนี้ใช้โมเดลแล้ว
-    c.state.hunger = 100;
-    c.state.energy = 100;
-    c.state.happiness = 100;
-    c.state.health = 100;
-    c.money = index === 0 ? 100 : oldMoney;
-    c.inventory.food = 1;
-    c.alive = true;
-    c.memory.logs = [];
-    c.actionIndex = 0;
-    c.totalReward = 0;  // 👈 reset reward
-    c.epsilon = 0.5//1.0 - index * 0.2;
-    c.age = 1
-  });
-
-  console.log('🚀 เริ่ม simulation ด้วย DQN');
-   const trainedTick = await runSimulation(1000, 0 , (tick)=>{
-    console.log(`🧬 Gen : ${index+1}`)
-    citizens.forEach(c => {
-      c.age += tick%10 === 0 ? 1 : 0
-    });
-   });
-   sum.push(citizens[0].age)
-   rewards.push(citizens[0].totalReward)
-   oldMoney = citizens[0].money
-
-
+  } catch {
+    console.log('📦 No Existing Model => Create New');
+    await sleep(3000)
+    initDQN(); // ✅ สร้างโมเดลใหม่ถ้าโหลดไม่เจอ
   }
-  
+
+  for (let index = 0; index < 1; index++) {
+    const epsilon = Math.max(0.1, 1.0 - index * 0.2); // 🔻 ลด epsilon
+
+    citizens.forEach(c => {
+      c.strategy = 'dqn';
+      c.state.hunger = 100;
+      c.state.energy = 100;
+      c.state.happiness = 100;
+      c.state.health = 100;
+      c.money = index === 0 ? 100 : oldMoney;
+      c.inventory.food = 1;
+      c.alive = true;
+      c.memory.logs = [];
+      c.actionIndex = 0;
+      c.totalReward = 0;
+      c.epsilon = epsilon;
+      c.age = 1;
+    });
+
+    console.log(`🚀 เริ่ม Simulation รอบที่ ${index + 1} (ε = ${epsilon.toFixed(2)})`);
+    
+    const trainedTick = await runSimulation(1000, 0, tick => {
+      if (tick % 10 === 0) {
+        citizens.forEach(c => c.age++);
+      }
+    });
+
+    sum.push(citizens[0].age);
+    rewards.push(citizens[0].totalReward);
+    oldMoney = citizens[0].money;
+  }
+
+  // 🧠 สรุปผลแต่ละ agent
   citizens.forEach(c => {
     console.log(`${c.name} action summary:`, summarizeActions(c.memory.logs));
   });
+
+ 
   
-  console.log("\n\n-------------------")
-  console.log('\n\n🤖 จบเรียบร้อยแล้ว')
-  console.log('📈 รวมเรียบร้อยแล้ว', sum)
-  console.log('🥇 จบเรียบร้อยแล้ว', rewards)
-
-
-
+  // 📊 แสดงผลรวม
+  console.log("\n\n-----------Result-----------");
+  console.log('🤖 จบเรียบร้อยแล้ว');
+  console.log('📈 อายุรวมแต่ละรอบ:', sum);
+  console.log('🥇 Reward รวมแต่ละรอบ:', rewards);
+   if( await compareModelPerformance({sum,rewards}) || isFirstTrain){
+    // 💾 Save Model
+    await saveModel();
+    console.log('🤖 Saved Model');
+  }
+  await sleep(2000)
+  }
 }
 
-//runDQN()
+runDQN(20);
+
+const compareModelPerformance = async (newResult) => {
+  
+  try {
+    const result = await loadJSON(result_path);
+
+    const totalAge = result.sum.reduce((a, b) => a + b, 0);
+    const totalNewAge = newResult.sum.reduce((a, b) => a + b, 0);
+    const totalReward = result.rewards.reduce((a, b) => a + b, 0);
+    const totalNewReward = newResult.rewards.reduce((a, b) => a + b, 0);
+
+  console.log("\n\n---------Compare Model Performance-----------");
+
+    console.log('📈 Old Age:', result.sum);
+    console.log('🥇 Old Reward:', result.rewards);
+    // เปรียบเทียบ performance เดิมกับใหม่
+
+    if(totalNewAge > totalAge && totalNewReward > totalReward){
+      saveJSON(result_path, newResult);
+      console.log(chalk.green('✅ Model result : Better'));
+      return true      
+    }else{
+      console.log(chalk.red('❌ Model result : Bad'));
+
+      return false
+    }
+
+  } catch (err) {
+    // กรณีไฟล์ performance เดิมไม่มี => สร้างใหม่
+     saveJSON(result_path, newResult);
+      console.log('📄 No Model Result : Create new ')
+    return false;
+  }
+};
 
 
 async function runNN() {

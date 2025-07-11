@@ -153,3 +153,20 @@ export function calculateReward(agent, action) {
   return reward;
 }
 
+export async function saveModel( path = 'file://./model') {
+  if (!model) {
+    throw new Error('Model not initialized');
+  }
+  await model.save(path);
+  console.log('✅ Model saved at', path);
+}
+
+export async function loadModel(path = 'file://./model/model.json') {
+  model = await tf.loadLayersModel(path);
+
+  // ✅ ต้อง compile ใหม่หลังโหลด
+  model.compile({
+    optimizer: tf.train.adam(0.001),
+    loss: 'meanSquaredError'
+  });
+}
