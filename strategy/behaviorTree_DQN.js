@@ -120,7 +120,8 @@ export class BTNode {
 
 // เรียก DQN ตัดสินใจ (async)
 async function chooseStrategyByDQN(agent) {
-    return decideWithDQN(agent)
+  const actionName = await decideWithDQN(agent)
+    return actionName.action
 }
 
 // สร้าง behavior tree ที่ใช้ DQN ตัดสินใจ

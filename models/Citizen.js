@@ -3,7 +3,7 @@ import { createBehaviorTreeWithNN } from '../strategy/behaviorTree_NN.js';
 import { decideWithTrainedNN } from '../strategy/neuralTf.js';
 import { createBehaviorTreeWithDQN } from '../strategy/behaviorTree_DQN.js'
 
-import { ACTIONS, selectAction, remember, trainFromBuffer, getActionName, calculateReward } from '../strategy/dqn.js';
+import { ACTIONS, selectAction, remember, trainFromBuffer, getActionName, calculateReward, decideWithDQN } from '../strategy/dqn.js';
 import { loadJSON, saveJSON } from '../utils/file.js';
 import { AGENT_MEMORY_PATH } from '../config/constant.js';
 const agentMemoryPath = AGENT_MEMORY_PATH
@@ -104,15 +104,9 @@ export class Citizen {
 
         if (this.strategy === 'dqn') {
           // 1. เตรียม state
-          const state = [
-            this.state.hunger / 100,
-            this.state.energy / 100,
-            this.money / 100,
-          ];
+          
 
-          // 2. ใช้โมเดลของตัวเองเลือก action
-          const actionIndex = await selectAction(this.model, state, this.epsilon);
-          const action = getActionName(actionIndex);
+          const { action,actionIndex, state} = await decideWithDQN(this);
 
           // 3. เก็บ decision ให้ behavior tree ใช้
           this._decision = action;
@@ -141,7 +135,7 @@ export class Citizen {
           },1000);
 
           // 8. ฝึกโมเดลของตัวเอง
-          await trainFromBuffer(this.model, this.replayBuffer);
+         // await trainFromBuffer(this.model, this.replayBuffer);
 
 
       } else if (this.strategy === 'nn') {

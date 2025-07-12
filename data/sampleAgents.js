@@ -1,7 +1,7 @@
 import { Citizen } from '../models/Citizen.js';
 import { createQModel } from '../strategy/dqn.js';
 
-const totalAgents = 10;
+const totalAgents = 1;
 
 const initialAgentData = {
   id: 'agent',

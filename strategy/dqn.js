@@ -32,7 +32,11 @@ export async function decideWithDQN(agent) {
   ];
   const epsilon = agent.epsilon;
   const actionIndex = await selectAction(agent.model, state, epsilon);
-  return getActionName(actionIndex);
+  return {
+    action: getActionName(actionIndex),
+    actionIndex,
+    state,
+  };
 }
 
 // ✅ รับ model และ state เข้าไป

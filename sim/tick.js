@@ -8,12 +8,12 @@ export async function tick(citizens, market = {}) {
       await citizen.decideAndAct();
     }
     const query = {
-      /*   ...citizen.state,
+        ...citizen.state,
      age : citizen.age,
        money: citizen.money,
        reward : citizen.totalReward,
-       inventory: citizen.inventory  */
-       mem : citizen.replayBuffer.length,
+       inventory: citizen.inventory 
+      // mem : citizen.replayBuffer.length,
         };
     console.log(query);
   }

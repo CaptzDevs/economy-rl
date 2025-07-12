@@ -38,16 +38,15 @@ async function runSimulation(steps = 10, delay = 500, callback) {
 }
 
 
-async function runIndividalDQN(epochs = 3) {
-  for (let epoch = 0; epoch < epochs; epoch++) {
+async function train(epochs = 3) {
+   return new Promise(async (resolve, reject) => {
+     for (let epoch = 0; epoch < epochs; epoch++) {
     const sum = [];
     const rewards = [];
     let oldMoney = 0;
 
-    const sharedMemory = await loadShareMemory()
-    const trainedModel = await loadModel();
-
-        const epsilon = trainedModel ? 0.1 : Math.max(0.1, 1.0 - epoch * 0.2);
+        const sharedMemory = await loadShareMemory()
+        const epsilon = Math.max(0.1, 1.0 - epoch * 0.2);
 
       for (const c of citizens) {
         c.strategy = "dqn";
@@ -55,7 +54,7 @@ async function runIndividalDQN(epochs = 3) {
         c.state.energy = 100;
         c.state.happiness = 100;
         c.state.health = 100;
-        c.money = epoch === 0 ? 100 : oldMoney;
+        c.money = 100 ;
         c.inventory.food = 1;
         c.alive = true;
         c.memory.logs = [];
@@ -63,13 +62,11 @@ async function runIndividalDQN(epochs = 3) {
         c.totalReward = 0;
         c.epsilon = epsilon;
         c.age = 1;
-        c.model = trainedModel ?? createQModel();
+        c.model = createQModel();
         
         c.replayBuffer = sharedMemory ?? [];
         // ถ้าอยากโหลดโมเดลแยก: await loadModel(`file://./model/${c.name}/model.json`)
       }
-
-     
       const trainedTick = await runSimulation(1000, 0, (tick) => {
         console.log("epoch :", epoch+1)
         if (tick % 10 === 0 && tick > 0) {
@@ -99,12 +96,91 @@ async function runIndividalDQN(epochs = 3) {
     }
   }
     console.log('🏁 Simulation completed!');
+    resolve();
+   })
+}
+
+async function run(epochs = 3) {
+
+      const sum = [];
+    const rewards = [];
+    let oldMoney = 0;
+
+   for (let epoch = 0; epoch < epochs; epoch++) {
+
+
+    const sharedMemory = await loadShareMemory()
+    const trainedModel = await loadModel();
+
+        const epsilon = trainedModel ? 0.01 : Math.max(0.1, 1.0 - epoch * 0.2);
+
+      for (const c of citizens) {
+        c.strategy = "dqn";
+        c.state.hunger = 100;
+        c.state.energy = 100;
+        c.state.happiness = 100;
+        c.state.health = 100;
+        c.money = 100;
+        c.inventory.food = 1;
+        c.alive = true;
+        c.memory.logs = [];
+        c.actionIndex = 0;
+        c.totalReward = 0;
+        c.epsilon = epsilon;
+        c.age = 1;
+        c.model = trainedModel
+        
+       // c.replayBuffer = sharedMemory ?? [];
+        // ถ้าอยากโหลดโมเดลแยก: await loadModel(`file://./model/${c.name}/model.json`)
+      }
+
+     
+      const trainedTick = await runSimulation(1000, 0, (tick) => {
+        console.log("epoch :", epoch+1)
+        if (tick % 10 === 0 && tick > 0) {
+          citizens.forEach((c) => c.age++);
+        }
+         console.log(
+        `🚀 เริ่ม Simulation รอบที่ ${epoch + 1} (ε = ${epsilon.toFixed(2)})`
+      );
+      });
+
+      sum.push(citizens[0].age);
+      rewards.push(citizens[0].totalReward);
+      oldMoney = citizens[0].money;
+
+    citizens.forEach((c) => {
+      //console.log(`${c.name} action summary:`, summarizeActions(c.memory.logs));
+    });
+
+    // ถ้าคุณมีระบบ compareModelPerformance แบบรวม:
+    const bestAgent = await compareMultipleModelPerformance(citizens, true);
+    if (bestAgent) {
+      // ถ้าอยาก save model แยก per agent:
+     // await saveModel(citizens[bestAgent.index].model, `file://./model`);
+    }
+ 
+  }
+    console.log('🏁 Simulation completed!');
+        // 📊 แสดงผลรวม
+    console.log("\n\n-----------Result-----------");
+    console.log("🤖 จบเรียบร้อยแล้ว");
+    console.log("📈 อายุรวมแต่ละรอบ:", sum);
+    console.log("🥇 Reward รวมแต่ละรอบ:", rewards);
+    console.log("📈 Age Avg.:", sum.reduce((a, b) => a + b, 0) / sum.length);
+    
+}
+
+async function runIndividalDQN(epochs = 5) {
+ /*  await train(epochs)
+  await waitWithSpinner('Waiting for run...', 3000, '✅ Next run started!') */;
+  run(epochs)
 
 }
 
-runIndividalDQN(20);
+runIndividalDQN(50);
 
-const compareMultipleModelPerformance = async (agents) => {
+const compareMultipleModelPerformance = async (agents , isTestModel = false) => {
   console.log(
     agents.map((item) => ({ age: item.age, reward: item.totalReward }))
   );
@@ -138,8 +214,8 @@ const compareMultipleModelPerformance = async (agents) => {
       if (
         queryBestAgent.age > savedResult.age 
       ) {
-        saveJSON(result_path, queryBestAgent);
-        saveSharedMemory(bestAgent.replayBuffer)
+        !isTestModel && saveJSON(result_path, queryBestAgent);
+         !isTestModel && saveSharedMemory(bestAgent.replayBuffer)
         console.log(chalk.green("✅ Model result : Better"));
         return queryBestAgent;
       } else {
@@ -152,8 +228,8 @@ const compareMultipleModelPerformance = async (agents) => {
   } catch (err) {
     // กรณีไฟล์ performance เดิมไม่มี => สร้างใหม่
     console.log("❌ Err :", err.message);
-    saveJSON(result_path, queryBestAgent);
-    saveSharedMemory(bestAgent.replayBuffer)
+     !isTestModel &&saveJSON(result_path, queryBestAgent);
+     !isTestModel &&saveSharedMemory(bestAgent.replayBuffer)
     console.log("📄 No Model Result : Create new ");
     return queryBestAgent;
   }
