@@ -31,7 +31,7 @@ export async function decideWithDQN(agent, model) {
     agent.money / 100
   ];
   const epsilon = agent.epsilon;
-  const actionIndex = await selectAction(model, state, epsilon);
+  const actionIndex = await selectAction(agent.model, state, epsilon);
   return getActionName(actionIndex);
 }
 
@@ -40,7 +40,7 @@ export async function selectAction(model, state, epsilon = 0.1) {
   if (Math.random() < epsilon) {
     return Math.floor(Math.random() * ACTIONS.length);
   }
-
+  
   const input = tf.tensor2d([state]);
   const qValues = await model.predict(input).data();
   input.dispose();

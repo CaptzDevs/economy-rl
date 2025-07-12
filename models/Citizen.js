@@ -8,8 +8,8 @@ import { loadJSON, saveJSON } from '../utils/file.js';
 import { AGENT_MEMORY_PATH } from '../config/constant.js';
 const agentMemoryPath = AGENT_MEMORY_PATH
 
-const btTree = createBehaviorTree();
-const btTreeNN = createBehaviorTreeWithNN();
+const btTree  = null
+const btTreeNN = null
 const btTreeDQN = createBehaviorTreeWithDQN()
 
 
@@ -26,6 +26,7 @@ export class Citizen {
       personality = {},
       memory = {},
       strategy = 'manual',
+      model = null
     }) {
       this.id = id;
       this.role = role;
@@ -69,11 +70,11 @@ export class Citizen {
       this.strategy = strategy;
       this.actionIndex = 0; // เพิ่มตัวนับลำดับ
       this._decision = null; // <- สำหรับ hybrid strategy
-      this.epsilon = 1
+      this.epsilon = 0.05
       this.totalReward = 0;
 
-      this.model = null
-      this.replayBuffer = []
+      this.model = model ?? null;
+      this.replayBuffer = [];
 
     }
   
@@ -109,13 +110,13 @@ export class Citizen {
             this.state.energy / 100,
             this.money / 100,
           ];
-
           // 2. ใช้โมเดลของตัวเองเลือก action
+
           const actionIndex = await selectAction(this.model, state, this.epsilon);
           const action = getActionName(actionIndex);
 
           // 3. เก็บ decision ให้ behavior tree ใช้
-          this._decision = action;
+         // this._decision = action;
 
           // 4. ตัดสินใจโดย behavior tree
           await btTreeDQN.tick(this, market);
@@ -132,26 +133,26 @@ export class Citizen {
           ];
 
           // 7. เก็บลง buffer ของตัวเอง
-          remember(this.replayBuffer, {
+          /* remember(this.replayBuffer, {
             state,
             action: actionIndex,
             reward,
             nextState,
             done: this.state.health <= 0,
-          },1000);
+          },1000); */
 
           // 8. ฝึกโมเดลของตัวเอง
-          await trainFromBuffer(this.model, this.replayBuffer);
+          //await trainFromBuffer(this.model, this.replayBuffer);
 
 
-      } else if (this.strategy === 'nn') {
+      }/*  else if (this.strategy === 'nn') {
         // ใช้ NN ตัดสินใจเหมือนเดิม
         this._decision = await decideWithTrainedNN(this);
         await btTreeNN.tick(this, market);
 
       } else if (this.strategy === 'bt') {
          btTree.tick(this, market);
-      }
+      } */
     }
     
     saveMemory(){

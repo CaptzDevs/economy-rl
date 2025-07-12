@@ -15,7 +15,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function runSimulation(steps = 10, delay = 500, callback) {
+async function runSimulation(steps = 100, delay = 500, callback) {
   let i = 0;
   for (i; i < steps; i++) {
     const aliveCitizens = citizens.filter((c) => c.alive);
@@ -25,7 +25,7 @@ async function runSimulation(steps = 10, delay = 500, callback) {
       break;
     }
 
-    console.clear();
+    //console.clear();
     callback(i);
     console.log(`📆 Tick ${i + 1} | เหลือ ${aliveCitizens.length} คน`);
     await tick(aliveCitizens); // รอ tick ทำงานเสร็จ (รองรับ async)
@@ -37,7 +37,20 @@ async function runSimulation(steps = 10, delay = 500, callback) {
   /* console.log('\n🧠 Logs ของ Agent แรก:', citizens[0]?.memory.logs || 'ไม่มีข้อมูล'); */
 }
 
+async function runDQN1(epochs = 3) {
 
+
+       // citizens[0].epsilon = epsilon;
+        // ถ้าอยากโหลดโมเดลแยก: await loadModel(`file://./model/${c.name}/model.json`)
+  console.log(typeof citizens[0].model.predict,'model.predict decideAndAct')
+
+   await tick(citizens); // รอ tick ทำงานเสร็จ (รองรับ async)
+     
+
+
+}
+
+runDQN1()
 async function runIndividalDQN(epochs = 3) {
   for (let epoch = 0; epoch < epochs; epoch++) {
     const sum = [];
@@ -47,7 +60,7 @@ async function runIndividalDQN(epochs = 3) {
     const sharedMemory = await loadShareMemory()
     const trainedModel = await loadModel();
 
-        const epsilon = 1 //Math.max(0.1, 1.0 - epoch * 0.2);
+        const epsilon = .1 //Math.max(0.1, 1.0 - epoch * 0.2);
 
       for (const c of citizens) {
         c.strategy = "dqn";
@@ -101,7 +114,7 @@ async function runIndividalDQN(epochs = 3) {
 
 }
 
-runIndividalDQN(20);
+//runIndividalDQN(20);
 
 const compareMultipleModelPerformance = async (agents) => {
   console.log(
