@@ -69,6 +69,9 @@ export class Citizen {
       this.epsilon = 1
       this.totalReward = 0;
 
+      this.model = null
+      this.replayBuffer = []
+
     }
   
     logAction(action) {
@@ -95,38 +98,48 @@ export class Citizen {
     
     async decideAndAct(market) {
       if (!this.alive) return;
-    
-      if (this.strategy === 'dqn') {
-        // 1. สร้าง state
-        const state = [this.state.hunger / 100, this.state.energy / 100, this.money / 100];
-    
-        // 2. DQN เลือก action index
-        const actionIndex = await selectAction(state, 0.2);
-        const action = getActionName(actionIndex);
-    
-        // 3. เก็บ decision ไว้ให้ BT ใช้
-        this._decision = action;
-    
-        // 4. ให้ BT ทำ action ตาม decision
-        await btTreeDQN.tick(this, market); // หรือ btTree.tick ถ้าใช้แบบธรรมดา
-    
-        // 5. คำนวณ reward จากสถานะหลังทำ action จริงใน BT
-        const reward = calculateReward(this, action);
-        this.totalReward += reward
-        // 6. สร้าง next state ใหม่
-        const nextState = [this.state.hunger / 100, this.state.energy / 100, this.money / 100];
-    
-        // 7. เก็บประสบการณ์
-        remember({
-          state,
-          action: actionIndex,
-          reward,
-          nextState,
-          done: this.state.health <= 0,
-        });
-    
-        // 8. ฝึก DQN จาก replay buffer
-        await trainFromBuffer();
+
+        if (this.strategy === 'dqn') {
+          // 1. เตรียม state
+          const state = [
+            this.state.hunger / 100,
+            this.state.energy / 100,
+            this.money / 100,
+          ];
+
+          // 2. ใช้โมเดลของตัวเองเลือก action
+          const actionIndex = await selectAction(this.model, state, this.epsilon);
+          const action = getActionName(actionIndex);
+
+          // 3. เก็บ decision ให้ behavior tree ใช้
+          this._decision = action;
+
+          // 4. ตัดสินใจโดย behavior tree
+          await btTreeDQN.tick(this, market);
+
+          // 5. ประเมินรางวัลหลัง action
+          const reward = calculateReward(this, action);
+          this.totalReward += reward;
+
+          // 6. สร้าง nextState
+          const nextState = [
+            this.state.hunger / 100,
+            this.state.energy / 100,
+            this.money / 100,
+          ];
+
+          // 7. เก็บลง buffer ของตัวเอง
+          remember(this.replayBuffer, {
+            state,
+            action: actionIndex,
+            reward,
+            nextState,
+            done: this.state.health <= 0,
+          });
+
+          // 8. ฝึกโมเดลของตัวเอง
+          await trainFromBuffer(this.model, this.replayBuffer);
+
 
       } else if (this.strategy === 'nn') {
         // ใช้ NN ตัดสินใจเหมือนเดิม
