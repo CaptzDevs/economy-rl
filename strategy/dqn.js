@@ -1,4 +1,6 @@
 import * as tf from '@tensorflow/tfjs-node';
+import { AGENT_MEMORY_PATH } from '../config/constant.js';
+import { loadJSON, saveJSON } from '../utils/file.js';
 
 export const ACTIONS = ['eat', 'rest', 'work', 'idle'];
 const GAMMA = 0.9;
@@ -46,7 +48,7 @@ export async function selectAction(model, state, epsilon = 0.1) {
 }
 
 // ✅ แยก buffer per agent
-export function remember(agentBuffer, experience, maxSize) {
+export function remember(agentBuffer, experience, maxSize = 1000) {
   agentBuffer.push(experience);
   if (agentBuffer.length > maxSize) agentBuffer.shift();
 }
@@ -88,21 +90,6 @@ export async function trainFromBuffer(model, agentBuffer, batchSize = 64) {
   });
 }
 
-// ✅ save และ load แยก model path ต่อ agent ได้
-export async function saveModel(model, path = 'file://./model') {
-  await model.save(path);
-  console.log('✅ Model saved at', path);
-}
-
-export async function loadModel(path = 'file://./model/model.json') {
-  const model = await tf.loadLayersModel(path);
-  model.compile({
-    optimizer: tf.train.adam(0.001),
-    loss: 'meanSquaredError'
-  });
-  return model;
-}
-
 export function calculateReward(agent, action) {
   let reward = 0;
   switch(action) {
@@ -113,4 +100,41 @@ export function calculateReward(agent, action) {
     default: reward = 0;
   }
   return reward;
+}
+
+// ✅ save และ load แยก model path ต่อ agent ได้
+export async function saveModel(model, path = 'file://./model') {
+  await model.save(path);
+  console.log('✅ Model saved at', path);
+}
+
+export async function loadModel(path = 'file://./model/model.json') {
+  try {
+    
+    const model = await tf.loadLayersModel(path);
+    model.compile({
+      optimizer: tf.train.adam(0.001),
+      loss: 'meanSquaredError'
+    });
+    return model;
+  } catch (error) {
+    console.log("Error :" , error)
+    return null
+  }
+}
+
+export async function loadShareMemory(){
+    try {
+          console.log("Load Memory")
+          const memory = await loadJSON(AGENT_MEMORY_PATH)
+          return memory
+        } catch (error) {
+          console.log("Error :" , error)
+          return []
+  }
+}
+
+export async function saveSharedMemory(buffer) {
+          console.log("Save Memory")
+          saveJSON(AGENT_MEMORY_PATH,buffer)
 }

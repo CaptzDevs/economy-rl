@@ -4,6 +4,9 @@ import { decideWithTrainedNN } from '../strategy/neuralTf.js';
 import { createBehaviorTreeWithDQN } from '../strategy/behaviorTree_DQN.js'
 
 import { ACTIONS, selectAction, remember, trainFromBuffer, getActionName, calculateReward } from '../strategy/dqn.js';
+import { loadJSON, saveJSON } from '../utils/file.js';
+import { AGENT_MEMORY_PATH } from '../config/constant.js';
+const agentMemoryPath = AGENT_MEMORY_PATH
 
 const btTree = createBehaviorTree();
 const btTreeNN = createBehaviorTreeWithNN();
@@ -135,7 +138,7 @@ export class Citizen {
             reward,
             nextState,
             done: this.state.health <= 0,
-          });
+          },1000);
 
           // 8. ฝึกโมเดลของตัวเอง
           await trainFromBuffer(this.model, this.replayBuffer);
@@ -151,6 +154,19 @@ export class Citizen {
       }
     }
     
+    saveMemory(){
+      console.log("Save Memory")
+      saveJSON(agentMemoryPath,this.replayBuffer)
+    }
 
+    async loadMemory(){
+      try {
+          const memory = await loadJSON(agentMemoryPath)
+          return memory
+      } catch (error) {
+        console.log("Error :" , error)
+        return []
+      }
+    }
   }
   

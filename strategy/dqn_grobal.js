@@ -169,4 +169,4 @@ export async function loadModel(path = 'file://./model/model.json') {
     optimizer: tf.train.adam(0.001),
     loss: 'meanSquaredError'
   });
-} ปรับ
+} 

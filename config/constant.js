@@ -1,0 +1,1 @@
+export const AGENT_MEMORY_PATH = './model/replay_buffer/memory_buffer.json'
