@@ -47,7 +47,7 @@ async function runIndividalDQN(epochs = 3) {
     const sharedMemory = await loadShareMemory()
     const trainedModel = await loadModel();
 
-        const epsilon = 1 //Math.max(0.1, 1.0 - epoch * 0.2);
+        const epsilon = trainedModel ? 0.1 : Math.max(0.1, 1.0 - epoch * 0.2);
 
       for (const c of citizens) {
         c.strategy = "dqn";
@@ -63,20 +63,21 @@ async function runIndividalDQN(epochs = 3) {
         c.totalReward = 0;
         c.epsilon = epsilon;
         c.age = 1;
-        c.model =  createQModel();
+        c.model = trainedModel ?? createQModel();
         
         c.replayBuffer = sharedMemory ?? [];
         // ถ้าอยากโหลดโมเดลแยก: await loadModel(`file://./model/${c.name}/model.json`)
       }
 
-      console.log(
-        `🚀 เริ่ม Simulation รอบที่ ${epoch + 1} (ε = ${epsilon.toFixed(2)})`
-      );
+     
       const trainedTick = await runSimulation(1000, 0, (tick) => {
         console.log("epoch :", epoch+1)
         if (tick % 10 === 0 && tick > 0) {
           citizens.forEach((c) => c.age++);
         }
+         console.log(
+        `🚀 เริ่ม Simulation รอบที่ ${epoch + 1} (ε = ${epsilon.toFixed(2)})`
+      );
       });
 
       sum.push(citizens[0].age);

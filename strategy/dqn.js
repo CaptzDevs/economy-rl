@@ -24,14 +24,14 @@ export function getActionName(index) {
 }
 
 // ✅ รับ model เข้ามา
-export async function decideWithDQN(agent, model) {
+export async function decideWithDQN(agent) {
   const state = [
     agent.state.hunger / 100,
     agent.state.energy / 100,
     agent.money / 100
   ];
   const epsilon = agent.epsilon;
-  const actionIndex = await selectAction(model, state, epsilon);
+  const actionIndex = await selectAction(agent.model, state, epsilon);
   return getActionName(actionIndex);
 }
 
