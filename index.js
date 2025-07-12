@@ -47,7 +47,7 @@ async function runIndividalDQN(epochs = 3) {
     const sharedMemory = await loadShareMemory()
     const trainedModel = await loadModel();
 
-        const epsilon = Math.max(0.1, 1.0 - epoch * 0.2);
+        const epsilon = 1 //Math.max(0.1, 1.0 - epoch * 0.2);
 
       for (const c of citizens) {
         c.strategy = "dqn";
