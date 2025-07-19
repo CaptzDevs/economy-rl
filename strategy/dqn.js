@@ -145,6 +145,8 @@ export function calculateReward(agent, action) {
   ) / 4;
 
   if (avgState > 90) reward += 0.1; // ร่างกายดี → ให้รางวัลเพิ่ม
+  reward += (agent.age * 0.01); // เพิ่ม reward ตามอายุ
+
 
   return reward;
 }
