@@ -11,3 +11,4 @@ export async function waitWithSpinner(message = 'Waiting...', duration = 3000, d
   await new Promise(resolve => setTimeout(resolve, duration));
   spinner.succeed(doneMessage);
 }
+

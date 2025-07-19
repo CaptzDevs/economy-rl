@@ -6,6 +6,9 @@ import { createBehaviorTreeWithDQN } from '../strategy/behaviorTree_DQN.js'
 import { ACTIONS, selectAction, remember, trainFromBuffer, getActionName, calculateReward, decideWithDQN } from '../strategy/dqn.js';
 import { loadJSON, saveJSON } from '../utils/file.js';
 import { AGENT_MEMORY_PATH } from '../config/constant.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
 const agentMemoryPath = AGENT_MEMORY_PATH
 
 const btTree = createBehaviorTree();
@@ -75,6 +78,9 @@ export class Citizen {
       this.model = null
       this.replayBuffer = []
 
+      this.learningRate = 0.001; // หรือจะให้สุ่ม หรือ set จาก personality ก็ได้
+
+
     }
   
     logAction(action) {
@@ -120,13 +126,17 @@ export class Citizen {
 
           // 6. สร้าง nextState
           const nextState = [
-            this.state.hunger / 100,
-            this.state.energy / 100,
-            this.money / 100,
+                this.state.hunger / 100,
+                this.state.energy / 100,
+                this.state.health / 100,
+                this.state.happiness / 100,
+                this.money / 100,
+                this.age / 200,
+                this.inventory.food / 100
           ];
 
           // 7. เก็บลง buffer ของตัวเอง
-          remember(this.replayBuffer, {
+         process.env.IS_TRAINING_MODEL.trim() === 'true' &&  remember(this.replayBuffer, {
             state,
             action: actionIndex,
             reward,
@@ -135,7 +145,7 @@ export class Citizen {
           },1000);
 
           // 8. ฝึกโมเดลของตัวเอง
-         // await trainFromBuffer(this.model, this.replayBuffer);
+        process.env.IS_TRAINING_MODEL.trim() === 'true' && await trainFromBuffer(this.model, this.replayBuffer);
 
 
       } else if (this.strategy === 'nn') {

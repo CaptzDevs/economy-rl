@@ -4,14 +4,17 @@ import { loadJSON, saveJSON } from '../utils/file.js';
 
 export const ACTIONS = ['eat', 'rest', 'work', 'idle'];
 const GAMMA = 0.9;
+const STATE = []
 
 // ✅ ใช้แทน global model
-export function createQModel() {
+export function createQModel(learningRate = 0.001) {
   const m = tf.sequential();
-  m.add(tf.layers.dense({ inputShape: [3], units: 16, activation: 'relu' }));
-  m.add(tf.layers.dense({ units: 16, activation: 'relu' }));
+  m.add(tf.layers.dense({ inputShape: [7], units: 32, activation: 'relu' }));
+  m.add(tf.layers.dense({ units: 32, activation: 'relu' }));
   m.add(tf.layers.dense({ units: ACTIONS.length, activation: 'linear' }));
-  m.compile({ optimizer: tf.train.adam(0.001), loss: 'meanSquaredError' });
+  
+  const optimizer = tf.train.adam(learningRate);
+  m.compile({ optimizer, loss: 'meanSquaredError' });
   return m;
 }
 
@@ -23,15 +26,21 @@ export function getActionName(index) {
   return ACTIONS[index];
 }
 
+
 // ✅ รับ model เข้ามา
 export async function decideWithDQN(agent) {
   const state = [
     agent.state.hunger / 100,
     agent.state.energy / 100,
-    agent.money / 100
+    agent.state.health / 100,
+    agent.state.happiness / 100,
+    Math.min(agent.money, 1_000_000_000) / 1_000_000_000,
+    agent.age / 200,
+    agent.inventory.food / 100
   ];
   const epsilon = agent.epsilon;
   const actionIndex = await selectAction(agent.model, state, epsilon);
+
   return {
     action: getActionName(actionIndex),
     actionIndex,
@@ -81,30 +90,66 @@ export async function trainFromBuffer(model, agentBuffer, batchSize = 64) {
     qNextTensor.dispose();
 
     const updatedQ = q[0];
-    updatedQ[action] = reward + (done ? 0 : GAMMA * Math.max(...qNext[0]));
+    const maxNextQ = Math.max(...qNext[0]);
+    const targetQ = reward + (done ? 0 : GAMMA * maxNextQ);
+
+    updatedQ[action] = targetQ;
 
     states.push(state);
     targets.push(updatedQ);
   }
 
   await model.fit(tf.tensor2d(states), tf.tensor2d(targets), {
-    epochs: 1,
+    epochs: 25,
     shuffle: true,
-    verbose : 0
+    verbose: 0
   });
 }
 
+
 export function calculateReward(agent, action) {
   let reward = 0;
-  switch(action) {
-    case 'eat':  reward = agent.state.hunger > 80 ? 1.5 : 1; break;
-    case 'rest': reward = agent.state.energy > 80 ? 0.8 : 0.6; break;
-    case 'work': reward = agent.money > 500 ? 0.5 : 1; break;
-    case 'idle': reward = -2; break;
-    default: reward = 0;
+
+  switch (action) {
+    case 'eat':
+      reward = agent.state.hunger > 80 ? 1.5 : 0.8;
+      break;
+
+    case 'rest':
+      reward = agent.state.energy < 40 ? 1.2 : 0.5;
+      break;
+
+    case 'work':
+      if (agent.state.energy < 30 || agent.state.health < 40) {
+        reward = -1.0;
+      } else if (agent.money > 10000) {
+        reward = 0.4;
+      } else {
+        reward = 1.0;
+      }
+      break;
+
+    case 'idle':
+      reward = -2.0;
+      break;
+
+    default:
+      reward = 0;
   }
+
+  const avgState = (
+    agent.state.hunger +
+    agent.state.energy +
+    agent.state.health +
+    agent.state.happiness
+  ) / 4;
+
+  if (avgState > 90) reward += 0.1; // ร่างกายดี → ให้รางวัลเพิ่ม
+
   return reward;
 }
+
+
 
 // ✅ save และ load แยก model path ต่อ agent ได้
 export async function saveModel(model, path = 'file://./model') {
