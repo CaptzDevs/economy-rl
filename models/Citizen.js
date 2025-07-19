@@ -130,7 +130,7 @@ export class Citizen {
                 this.state.energy / 100,
                 this.state.health / 100,
                 this.state.happiness / 100,
-                this.money / 100,
+                this.money / 1_000_000_000,
                 this.age / 200,
                 this.inventory.food / 100
           ];

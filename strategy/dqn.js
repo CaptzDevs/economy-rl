@@ -34,7 +34,7 @@ export async function decideWithDQN(agent) {
     agent.state.energy / 100,
     agent.state.health / 100,
     agent.state.happiness / 100,
-    Math.min(agent.money, 1_000_000_000) / 1_000_000_000,
+    agent.money / 1_000_000_000,
     agent.age / 200,
     agent.inventory.food / 100
   ];
