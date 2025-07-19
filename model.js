@@ -42,7 +42,7 @@ async function run(epochs = 3) {
         c.age = 1;
         c.model = trainedModel
         
-        c.replayBuffer = sharedMemory ?? [];
+        c.replayBuffer =  [];
         // ถ้าอยากโหลดโมเดลแยก: await loadModel(`file://./model/${c.name}/model.json`)
       }
 
@@ -60,6 +60,8 @@ async function run(epochs = 3) {
          citizens.forEach((c) => {
             c.logAgentState()
           });
+    console.log(summarizeActions(citizens[0].memory.logs));
+
       });
 
       sum.push(citizens[0].age);
