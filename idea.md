@@ -1,3 +1,8 @@
+## TODO
+    - Add feature which can tell agent if eat when hunger > 80 it's bad for health 
+
+
+
 ## Entity 
 ### หมวดหมู่  Entity                              
  ---

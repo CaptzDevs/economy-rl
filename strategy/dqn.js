@@ -112,7 +112,7 @@ export function calculateReward(agent, action) {
 
   switch (action) {
     case 'eat':
-      reward = agent.state.hunger > 80 ? 1.5 : 0.8;
+      reward = agent.state.hunger > 80 ? 1.5 : 0.5;
       break;
 
     case 'rest':
