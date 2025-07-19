@@ -141,7 +141,7 @@ export class Citizen {
             action: actionIndex,
             reward,
             nextState,
-            done: this.state.health <= 0,
+            done: this.state.health <= 0 || !this.alive,
           },100000);
 
           // 8. ฝึกโมเดลของตัวเอง
@@ -171,6 +171,19 @@ export class Citizen {
         console.log("Error :" , error)
         return []
       }
+    }
+
+
+    logAgentState(){
+       const query = {
+        ...this.state,
+     age : this.age,
+       money: this.money,
+       reward : this.totalReward,
+       inventory: this.inventory 
+      // mem : this.replayBuffer.length,
+        };
+        console.log(query)
     }
   }
   

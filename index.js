@@ -23,8 +23,8 @@ export async function runSimulation(steps = 10, delay = 500, callback) {
       break;
     }
 
-    callback(i);
     console.log(`📆 Tick ${i + 1} | เหลือ ${aliveCitizens.length} คน`);
+    callback(i);
     await tick(aliveCitizens); // รอ tick ทำงานเสร็จ (รองรับ async)
     await sleep(delay);
     console.clear();

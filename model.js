@@ -46,6 +46,7 @@ async function run(epochs = 3) {
         // ถ้าอยากโหลดโมเดลแยก: await loadModel(`file://./model/${c.name}/model.json`)
       }
 
+   
       const trainedTick = await runSimulation(1000, 1, (tick) => {
         console.log("epoch :", epoch+1)
         if (tick % 10 === 0 && tick > 0) {
@@ -55,6 +56,10 @@ async function run(epochs = 3) {
         `🚀 เริ่ม Simulation [${process.env.IS_TRAINING_MODEL.trim()}] รอบที่ ${epoch + 1} (ε = ${epsilon.toFixed(2)})` 
       );
       console.log(`🔄 Memory Size : ${citizens[0].replayBuffer.length }`)
+
+         citizens.forEach((c) => {
+            c.logAgentState()
+          });
       });
 
       sum.push(citizens[0].age);

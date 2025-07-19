@@ -49,6 +49,10 @@ async function train(epochs = 3) {
       );
       console.log(`🔄 Memory Size : ${sharedMemory.length }`)
 
+          citizens.forEach((c) => {
+            c.logAgentState()
+          });
+
       });
 
 
