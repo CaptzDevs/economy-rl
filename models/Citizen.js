@@ -142,7 +142,7 @@ export class Citizen {
             reward,
             nextState,
             done: this.state.health <= 0,
-          },1000);
+          },100000);
 
           // 8. ฝึกโมเดลของตัวเอง
         process.env.IS_TRAINING_MODEL.trim() === 'true' && await trainFromBuffer(this.model, this.replayBuffer);

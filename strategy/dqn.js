@@ -122,10 +122,10 @@ export function calculateReward(agent, action) {
     case 'work':
       if (agent.state.energy < 30 || agent.state.health < 40) {
         reward = -1.0;
-      } else if (agent.money > 10000) {
+      } else if (agent.money > 1000) {
         reward = 0.4;
       } else {
-        reward = 1.0;
+        reward = 1.2;
       }
       break;
 

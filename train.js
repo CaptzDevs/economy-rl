@@ -17,7 +17,7 @@ async function train(epochs = 3) {
     const rewards = [];
     let oldMoney = 0;
 
-        const sharedMemory = await loadShareMemory()
+        const sharedMemory = await loadShareMemory() ?? []
         const epsilon = Math.max(0.1, 1.0 - epoch * 0.3);
 
       for (const c of citizens) {
@@ -47,6 +47,8 @@ async function train(epochs = 3) {
          console.log(
         `🚀 เริ่ม Train Simulation [${process.env.IS_TRAINING_MODEL.trim()}] รอบที่ ${epoch + 1} (ε = ${epsilon.toFixed(2)})` 
       );
+      console.log(`🔄 Memory Size : ${sharedMemory.length }`)
+
       });
 
 
