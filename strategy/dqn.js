@@ -2,14 +2,14 @@ import * as tf from '@tensorflow/tfjs-node';
 import { AGENT_MEMORY_PATH } from '../config/constant.js';
 import { loadJSON, saveJSON } from '../utils/file.js';
 
-export const ACTIONS = ['eat', 'rest', 'work', 'idle'];
+export const ACTIONS = ['eat', 'buy', 'rest', 'work', 'idle'];
 const GAMMA = 0.9;
 const STATE = []
 
 // ✅ ใช้แทน global model
 export function createQModel(learningRate = 0.001) {
   const m = tf.sequential();
-  m.add(tf.layers.dense({ inputShape: [7], units: 32, activation: 'relu' }));
+  m.add(tf.layers.dense({ inputShape: [10], units: 32, activation: 'relu' }));
   m.add(tf.layers.dense({ units: 32, activation: 'relu' }));
   m.add(tf.layers.dense({ units: ACTIONS.length, activation: 'linear' }));
   
@@ -36,7 +36,10 @@ export async function decideWithDQN(agent) {
     agent.state.happiness / 100,
     agent.money / 1_000_000_000,
     agent.age / 200,
-    agent.inventory.food / 100
+    agent.weight / 200,
+    agent.height / 200,
+    agent.bmi / 100,
+    agent.inventory.food / 100,
   ];
   const epsilon = agent.epsilon;
   const actionIndex = await selectAction(agent.model, state, epsilon);
@@ -112,8 +115,15 @@ export function calculateReward(agent, action) {
 
   switch (action) {
     case 'eat':
-      reward = agent.state.hunger > 80 ? 1.5 : 0.5;
-      break;
+    if (agent.bmi >= 18.5 && agent.bmi <= 22.9) {
+      reward = agent.state.hunger < 80 ? 1.5 : 0.5;
+    } else if (agent.bmi < 18.5 && agent.state.hunger < 90) {
+      reward = 1.2; // กรณีผอมมาก → ควรกิน
+    } else {
+      reward = -0.5; // อ้วนแล้วไม่ควรกิน
+    }
+    break;
+
 
     case 'rest':
       reward = agent.state.energy < 40 ? 1.2 : 0.5;
@@ -136,6 +146,8 @@ export function calculateReward(agent, action) {
     default:
       reward = 0;
   }
+  console.log(agent._decision , action,'dasddasdas')
+  if(agent._decision != action) reward -= 5;
 
   const avgState = (
     agent.state.hunger +
@@ -167,6 +179,7 @@ export async function loadModel(path = 'file://./model/model.json') {
       optimizer: tf.train.adam(0.001),
       loss: 'meanSquaredError'
     });
+    console.log(model.stateful)
     return model;
   } catch (error) {
     console.log("Error :" , error)

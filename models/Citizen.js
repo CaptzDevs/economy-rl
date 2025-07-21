@@ -29,6 +29,8 @@ export class Citizen {
       personality = {},
       memory = {},
       strategy = 'manual',
+      weight = 60,
+      height = 170,
     }) {
       this.id = id;
       this.role = role;
@@ -36,6 +38,11 @@ export class Citizen {
       this.age = age;
       this.name = name;
       this.money = money;
+      this.weight = weight
+      this.height = height
+      this.bmi = this.height > 0 ? this.weight / ((this.height / 100) ** 2) : 0;
+
+
   
       this.alive = true
       this.state = {
@@ -126,13 +133,16 @@ export class Citizen {
 
           // 6. สร้าง nextState
           const nextState = [
-                this.state.hunger / 100,
-                this.state.energy / 100,
-                this.state.health / 100,
-                this.state.happiness / 100,
-                this.money / 1_000_000_000,
-                this.age / 200,
-                this.inventory.food / 100
+                  this.state.hunger / 100,
+                  this.state.energy / 100,
+                  this.state.health / 100,
+                  this.state.happiness / 100,
+                  this.money / 1_000_000_000,
+                  this.age / 200,
+                  this.weight / 200,
+                  this.height / 200,
+                  this.bmi / 100,
+                  this.inventory.food / 100,
           ];
 
           // 7. เก็บลง buffer ของตัวเอง
@@ -178,12 +188,19 @@ export class Citizen {
        const query = {
         ...this.state,
      age : this.age,
-       money: this.money,
+      
+       inventory: this.inventory,
+       weight : this.weight,
+       height : this.height,
+        bmi : this.bmi,
+         money: this.money,
        reward : this.totalReward,
-       inventory: this.inventory 
       // mem : this.replayBuffer.length,
         };
         console.log(query)
     }
+
+   
+
   }
   

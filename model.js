@@ -41,7 +41,7 @@ async function run(epochs = 3) {
         c.epsilon = epsilon;
         c.age = 1;
         c.model = trainedModel
-        
+        c.weight = 60;
         c.replayBuffer =  [];
         // ถ้าอยากโหลดโมเดลแยก: await loadModel(`file://./model/${c.name}/model.json`)
       }

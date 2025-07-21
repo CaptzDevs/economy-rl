@@ -18,7 +18,7 @@ async function train(epochs = 3) {
     let oldMoney = 0;
 
         const sharedMemory = await loadShareMemory() ?? []
-        const epsilon = Math.max(0.1, 1.0 - epoch * 0.3);
+        const epsilon = Math.max(0.1, 1.0 - epoch * 0.2);
 
       for (const c of citizens) {
         c.strategy = "dqn";
@@ -34,6 +34,8 @@ async function train(epochs = 3) {
         c.totalReward = 0;
         c.epsilon = epsilon;
         c.age = 1;
+        c.weight = 60;
+        c.height = 170;
         c.model = createQModel();
         
         c.replayBuffer = sharedMemory ?? [];

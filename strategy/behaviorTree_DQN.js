@@ -119,16 +119,16 @@ export class BTNode {
   }
 
 // เรียก DQN ตัดสินใจ (async)
-async function chooseStrategyByDQN(agent) {
+/* async function chooseStrategyByDQN(agent) {
   const actionName = await decideWithDQN(agent)
     return actionName.action
-}
+} */
 
 // สร้าง behavior tree ที่ใช้ DQN ตัดสินใจ
 export function createBehaviorTreeWithDQN() {
   return new AsyncSequence([
     new AsyncAction(async (agent) => {
-      agent._decision = await chooseStrategyByDQN(agent);
+      //agent._decision = await chooseStrategyByDQN(agent);
       console.log('🧠 DQN Decision:', agent._decision);
       return true;
     }),
@@ -137,9 +137,12 @@ export function createBehaviorTreeWithDQN() {
         new Condition((a) => a._decision === 'eat' && a.inventory.food > 0),
         new Action((a) => {
           a.inventory.food--;
+          
           a.state.hunger = Math.min(100, a.state.hunger + 40);
           a.state.health = Math.min(100, a.state.health + 5);
           a.state.happiness = Math.max(0, a.state.happiness + 15);
+          
+          a.weight = a.state.hunger > 80 ? a.weight + 1.5 : a.weight;
 
           a.logAction('eat');
           console.log(`🤖 ${a.name} : 🍽️  eats.`);
@@ -147,7 +150,7 @@ export function createBehaviorTreeWithDQN() {
         }),
       ]),
       new AsyncSequence([
-        new Condition((a) => a._decision === 'eat' && a.inventory.food === 0 && a.money >= 10),
+        new Condition((a) => a._decision === 'buy' && a.money >= 10),
         new Action((a) => {
           a.money -= 10;
           a.state.happiness = Math.max(0, a.state.happiness + 20);
