@@ -165,7 +165,7 @@ export function calculateReward(agent, action , actualAction) {
       break;
 
     case 'idle':
-      reward += -2.0;
+      reward = -2.0;
       break;
 
     default:
