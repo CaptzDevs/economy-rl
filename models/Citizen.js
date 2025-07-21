@@ -3,7 +3,7 @@ import { createBehaviorTreeWithNN } from '../strategy/behaviorTree_NN.js';
 import { decideWithTrainedNN } from '../strategy/neuralTf.js';
 import { createBehaviorTreeWithDQN } from '../strategy/behaviorTree_DQN.js'
 
-import { ACTIONS, selectAction, remember, trainFromBuffer, getActionName, calculateReward, decideWithDQN } from '../strategy/dqn.js';
+import { ACTIONS, selectAction, remember, trainFromBuffer, getActionName, calculateReward, decideWithDQN, getActionIndex } from '../strategy/dqn.js';
 import { loadJSON, saveJSON } from '../utils/file.js';
 import { AGENT_MEMORY_PATH } from '../config/constant.js';
 import dotenv from 'dotenv';
@@ -79,6 +79,7 @@ export class Citizen {
       this.strategy = strategy;
       this.actionIndex = 0; // เพิ่มตัวนับลำดับ
       this._decision = null; // <- สำหรับ hybrid strategy
+      this._action = null; // <- Actual action
       this.epsilon = 1
       this.totalReward = 0;
 
@@ -125,10 +126,9 @@ export class Citizen {
           this._decision = action;
 
           // 4. ตัดสินใจโดย behavior tree
-          await btTreeDQN.tick(this, market);
-
+           await btTreeDQN.tick(this, market);
           // 5. ประเมินรางวัลหลัง action
-          const reward = calculateReward(this, action);
+          const reward = calculateReward(this , action, this._action);
           this.totalReward += reward;
 
           // 6. สร้าง nextState
@@ -144,11 +144,11 @@ export class Citizen {
                   this.bmi / 100,
                   this.inventory.food / 100,
           ];
-
           // 7. เก็บลง buffer ของตัวเอง
          process.env.IS_TRAINING_MODEL.trim() === 'true' &&  remember(this.replayBuffer, {
             state,
             action: actionIndex,
+            actualAction: getActionIndex(this._action), // สิ่งที่ทำจริง (optional)
             reward,
             nextState,
             done: this.state.health <= 0 || !this.alive,

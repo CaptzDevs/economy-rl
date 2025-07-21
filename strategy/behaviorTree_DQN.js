@@ -145,18 +145,20 @@ export function createBehaviorTreeWithDQN() {
           a.weight = a.state.hunger > 80 ? a.weight + 1.5 : a.weight;
 
           a.logAction('eat');
+          a._action = 'eat';
           console.log(`🤖 ${a.name} : 🍽️  eats.`);
           return true;
         }),
       ]),
       new AsyncSequence([
-        new Condition((a) => a._decision === 'buy' && a.money >= 10),
+        new Condition((a) => a._decision === 'buy' && a.money >= 100),
         new Action((a) => {
-          a.money -= 10;
+          a.money -= 100;
           a.state.happiness = Math.max(0, a.state.happiness + 20);
           a.inventory.food++;
           a.logAction('buy');
           console.log(`🤖 ${a.name} : 🛒 buys food.`);
+          a._action = 'buy';
           return true;
         }),
       ]),
@@ -171,6 +173,7 @@ export function createBehaviorTreeWithDQN() {
 
           a.logAction('work');
           console.log(`🤖 ${a.name} : 💼 works.`);
+          a._action = 'work';
           return true;
         }),
       ]),
@@ -184,6 +187,7 @@ export function createBehaviorTreeWithDQN() {
 
           a.logAction('rest');
           console.log(`🤖 ${a.name} : 😴 rests.`);
+          a._action = 'rest';
           return true;
         }),
       ]),
@@ -191,6 +195,7 @@ export function createBehaviorTreeWithDQN() {
       new Action((a) => {
         console.log(`🤖 ${a.name} : 💤 idle.`);
         a.logAction('idle');
+          a._action = 'idle';
         return true;
       }),
     ]),

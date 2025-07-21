@@ -1,6 +1,6 @@
 export function updateState(citizen) {
   citizen.state.hunger = citizen._decision !== 'idle' 
-        ? Math.max(0, citizen.state.hunger - 0.5) 
+        ? Math.max(0, citizen.state.hunger - 2) 
         : citizen.state.hunger 
   citizen.state.energy = Math.max(
     0,
@@ -35,13 +35,13 @@ function checkIsAlive (citizen) {
 
 function calculateHealth(citizen) {
   let health = citizen.state.health ?? 100;
-  let baseHealthDecay = 4 * (citizen.age*0.2)
+  let baseHealthDecay = (citizen.age*0.3)
   const hunger = citizen.state.hunger ?? 100;  // 0 = หิวสุด, 100 = อิ่ม
   const energy = citizen.state.energy ?? 100;  // 0 = หมดแรง
   const bmi = citizen.bmi
   const social = citizen.state.social ?? 100;  // 0 = โดดเดี่ยว
-
   // เงื่อนไขเสื่อมสุขภาพ
+  console.log(baseHealthDecay,'baseHealthDecay')
   if (hunger < 20) {
     health -= baseHealthDecay; // หิวมาก
   } else if (hunger < 50) {
@@ -65,12 +65,12 @@ function calculateHealth(citizen) {
     }
   }
 
-  if(bmi >= 18.5 && bmi <= 22.9 ){
+  /* if(bmi >= 18.5 && bmi <= 22.9 ){
     health += baseHealthDecay;
   }else{
-    health -= baseHealthDecay;
+    health -= baseHealthDecay*0.01;
   }
-
+ */
   
   // จำกัดค่าให้อยู่ในช่วง 0-100
   health = Math.max(0, Math.min(100, health));
