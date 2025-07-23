@@ -23,7 +23,7 @@ async function run(epochs = 3) {
    for (let epoch = 0; epoch < epochs; epoch++) {
 
     const sharedMemory = await loadShareMemory()
-    const loadBestTrainedModel =  await loadModel(`file://./bestModel`) 
+    const loadBestTrainedModel =  await loadModel('file://./model/bestModel/model.json');
     const trainedModel = loadBestTrainedModel ?  loadBestTrainedModel : await loadModel() 
 
     const epsilon = 0

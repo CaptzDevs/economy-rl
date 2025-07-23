@@ -9,7 +9,7 @@ export function updateState(citizen) {
   citizen.state.social = Math.max(0, (citizen.state.social ?? 100) - 0.3);
   
   // อัปเดต health ด้วยฟังก์ชันแยก
-  citizen.state.health = calculateHealth(citizen);
+  citizen.state.health -=50 //calculateHealth(citizen);
   citizen.state.happiness = calculateHappiness(citizen);
   citizen.alive = checkIsAlive(citizen)
   

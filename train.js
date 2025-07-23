@@ -22,7 +22,7 @@ async function train(epochs = 3) {
 
         const trainedModel = await loadModel();
         const sharedMemory = await loadShareMemory() ?? []
-        const epsilon = Math.max(0.1, 1.0 - epoch * 0.15);
+        const epsilon = Math.max(0.1, 1.0 - epoch * 0.5);
 
       for (const c of citizens) {
         c.strategy = "dqn";
@@ -72,9 +72,10 @@ async function train(epochs = 3) {
     const bestAgent = await saveModelPerformance(citizens,currentEpoch,epsilon);
     await saveModel(citizens[0].model, `file://./model`);
 
+
     if (epsilon <= 0.2 && bestAgent) {
       // ถ้าอยาก save model แยก per agent:
-      await saveModel(citizens[bestAgent.index].model, `file://./bestModel`);
+      await saveModel(citizens[0].model, `file://./model/bestModel`);
       console.log("-----------------[ Saved Best Model ]------------------")
       console.log(`🏆 ${chalk.yellow("Best Model")}`)
       console.log("--------------------------------------------------------")

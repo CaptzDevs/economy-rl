@@ -1,6 +1,6 @@
 import { loadJSON, saveJSON } from "./file.js";
 const result_path = "./model/modelResult.json";
-import { saveSharedMemory } from "../strategy/dqn.js";
+import { loadModel, saveSharedMemory } from "../strategy/dqn.js";
 import chalk from "chalk";
 
 function getBestModel(models) {
@@ -25,7 +25,7 @@ export const saveModelPerformance = async (agents ,epochs,epsilon, isTestModel =
     reward: agents[0].totalReward,
   };
   
-  const resultSet = [queryBestAgent]
+  let resultSet = [queryBestAgent]
   
   try {
     const savedResult = await loadJSON(result_path);
@@ -39,7 +39,7 @@ export const saveModelPerformance = async (agents ,epochs,epsilon, isTestModel =
 
       //Campare with best model and save
       if(epsilon <= 0.2){
-      const bestTrainedModel = await loadModel('file://./bestModel');
+      const bestTrainedModel = await loadModel('file://./model/bestModel/model.json');
 
       if(!bestTrainedModel) {
         return queryBestAgent;
