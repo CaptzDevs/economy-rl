@@ -7,6 +7,8 @@ import { ACTIONS, selectAction, remember, trainFromBuffer, getActionName, calcul
 import { loadJSON, saveJSON } from '../utils/file.js';
 import { AGENT_MEMORY_PATH } from '../config/constant.js';
 import dotenv from 'dotenv';
+import chalk from "chalk";
+
 dotenv.config();
 
 const agentMemoryPath = AGENT_MEMORY_PATH
@@ -78,6 +80,7 @@ export class Citizen {
       
       this.strategy = strategy;
       this.actionIndex = 0; // เพิ่มตัวนับลำดับ
+      this._decidedBy = null; // ตัดสินใจโดย
       this._decision = null; // <- สำหรับ hybrid strategy
       this._action = null; // <- Actual action
       this.epsilon = 1
@@ -87,7 +90,6 @@ export class Citizen {
       this.replayBuffer = []
 
       this.learningRate = 0.001; // หรือจะให้สุ่ม หรือ set จาก personality ก็ได้
-
 
     }
   
@@ -131,6 +133,7 @@ export class Citizen {
           const reward = calculateReward(this , action, this._action);
           this.totalReward += reward;
 
+          console.log(`🏆 Reward: ${ chalk.yellow(reward) }`);
           // 6. สร้าง nextState
           const nextState = [
                   this.state.hunger / 100,
@@ -195,6 +198,7 @@ export class Citizen {
         bmi : this.bmi,
          money: this.money,
        reward : this.totalReward,
+       _decidedBy : this._decidedBy,
       // mem : this.replayBuffer.length,
         };
         console.log(query)

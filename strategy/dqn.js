@@ -43,7 +43,7 @@ export async function decideWithDQN(agent) {
     agent.inventory.food / 100,
   ];
   const epsilon = agent.epsilon;
-  const actionIndex = await selectAction(agent.model, state, epsilon);
+  const actionIndex = await selectAction(agent, state, epsilon);
 
   return {
     action: getActionName(actionIndex),
@@ -53,13 +53,15 @@ export async function decideWithDQN(agent) {
 }
 
 // ✅ รับ model และ state เข้าไป
-export async function selectAction(model, state, epsilon = 0.1) {
+export async function selectAction(agent, state, epsilon = 0.1) {
   if (Math.random() < epsilon) {
+    agent._decidedBy = 'random';
     return Math.floor(Math.random() * ACTIONS.length);
   }
 
+  agent._decidedBy = 'model';
   const input = tf.tensor2d([state]);
-  const qValues = await model.predict(input).data();
+  const qValues = await agent.model.predict(input).data();
   input.dispose();
   return qValues.indexOf(Math.max(...qValues));
 }
@@ -97,7 +99,7 @@ export async function trainFromBuffer(model, agentBuffer, batchSize = 64) {
     const maxNextQ = Math.max(...qNext[0]);
     const targetQ = reward + (done ? 0 : GAMMA * maxNextQ);
 
-    updatedQ[actualAction] = targetQ;
+    updatedQ[action] = targetQ;
 
     states.push(state);
     targets.push(updatedQ);
@@ -114,7 +116,7 @@ export async function trainFromBuffer(model, agentBuffer, batchSize = 64) {
 export function calculateReward(agent, action , actualAction) {
   let reward = 0;
 
-   const avgState = (
+/*    const avgState = (
     agent.state.hunger +
     agent.state.energy +
     agent.state.health +
@@ -122,52 +124,67 @@ export function calculateReward(agent, action , actualAction) {
   ) / 4;
 
   if (avgState > 90) reward += 0.1; // ร่างกายดี → ให้รางวัลเพิ่ม
-  reward += (agent.age * 0.5); // เพิ่ม reward ตามอายุ
+  reward += (agent.age * 0.5); // เพิ่ม reward ตามอายุ */
 
   if(agent._decision != actualAction){
-      reward -= .5;
       console.log(`❌ ${chalk.red("Invalid Action")}`);
-      return reward
     }else{
     console.log(`✅ ${chalk.green("Valid Action")}`)
   }
 
-  switch (actualAction) {
+  switch (action) {
     case 'eat':
-    if (agent.bmi >= 18.5 && agent.bmi <= 22.9) {
-      reward += agent.state.hunger < 80 ? 1.5 : 0.5;
-    } else if (agent.bmi < 18.5 && agent.state.hunger < 90) {
-      reward += 1.2; // กรณีผอมมาก → ควรกิน
-    } else {
-      reward = -0.5; // อ้วนแล้วไม่ควรกิน
-    }
-    break;
-    case 'buy':
-      if( agent.inventory.food === 0 && agent.state.hunger < 40){
-        reward += 1.2
+      if(agent._decision === actualAction){
+          if(agent.state.hunger < 50){
+            reward += 1.5 ;
+          }else{
+            reward += 0.5;
+          }
+
       }else{
-        reward += 0.5
+        reward -= 2.0
+      }
+    break;
+
+    case 'buy':
+      if(agent._decision === actualAction){
+    
+        if(agent.inventory.food === 0 && agent.state.hunger < 50){
+          reward += 1.5
+        }else{
+          reward += 0.5
+        }
+
+        if (agent.inventory.food > 50) {
+            reward -= 1.0 // ตุนเกินไป
+        }
+        
+      }else{
+        reward -= 2.0
       }
       break;
 
     case 'rest':
-      reward = agent.state.energy < 40 ? 1.2 : 0.5;
+      reward = agent.state.energy < 50 ? 1.5 : 0.5;
       break;
 
     case 'work':
-      if (agent.state.energy < 30 || agent.state.health < 40) {
-        reward += -1.0;
-      } else if (agent.money > 1000) {
-        reward += 0.4;
+      if(agent.state.energy >= 50 && agent.state.health >= 50) {
+        reward += 1.0;
+      }else{
+        reward += 0.25;
+      }
+
+       if (agent.money <= 1000) {
+        reward += 0.5;
       } else {
-        reward += 1.2;
+        reward += 0.25;
       }
       break;
 
     case 'idle':
       reward = -2.0;
       break;
-
     default:
       reward = 0;
   }

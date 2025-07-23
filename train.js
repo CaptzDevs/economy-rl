@@ -1,24 +1,28 @@
 import { citizens } from "./data/sampleAgents.js";
 import {  createQModel, loadModel, loadShareMemory, saveModel, saveSharedMemory } from "./strategy/dqn.js";
 import { waitWithSpinner } from "./utils/loading.js";
-import { compareMultipleModelPerformance } from "./utils/calculation.js";
+import { compareMultipleModelPerformance, saveModelPerformance, summarizeActions } from "./utils/calculation.js";
 import { runSimulation } from "./index.js";
 import { sleep } from "./utils/timer.js";
 
 import dotenv from 'dotenv';
+import chalk from "chalk";
 dotenv.config();
 
 const result_path = "./model/modelResult.json";
 
 async function train(epochs = 3) {
    return new Promise(async (resolve, reject) => {
-     for (let epoch = 0; epoch < epochs; epoch++) {
-    const sum = [];
+      const sum = [];
     const rewards = [];
+    let currentEpoch = 0;
+     for (let epoch = 0; epoch < epochs; epoch++) {
+  
     let oldMoney = 0;
 
+        const trainedModel = await loadModel();
         const sharedMemory = await loadShareMemory() ?? []
-        const epsilon = Math.max(0.1, 1.0 - epoch * 0.2);
+        const epsilon = Math.max(0.1, 1.0 - epoch * 0.15);
 
       for (const c of citizens) {
         c.strategy = "dqn";
@@ -36,7 +40,7 @@ async function train(epochs = 3) {
         c.age = 1;
         c.weight = 60;
         c.height = 170;
-        c.model = createQModel();
+        c.model = epsilon > 0.2 ? createQModel() : trainedModel;
         
         c.replayBuffer = sharedMemory ?? [];
         // ถ้าอยากโหลดโมเดลแยก: await loadModel(`file://./model/${c.name}/model.json`)
@@ -50,38 +54,54 @@ async function train(epochs = 3) {
         `🚀 เริ่ม Train Simulation [${process.env.IS_TRAINING_MODEL.trim()}] รอบที่ ${epoch + 1} (ε = ${epsilon.toFixed(2)})` 
       );
       console.log(`🔄 Memory Size : ${sharedMemory.length }`)
-
           citizens.forEach((c) => {
             c.logAgentState()
           });
 
       });
 
-
       sum.push(citizens[0].age);
       rewards.push(citizens[0].totalReward);
       oldMoney = citizens[0].money;
 
     citizens.forEach((c) => {
-      //console.log(`${c.name} action summary:`, summarizeActions(c.memory.logs));
+      console.log(`${c.name} action summary:`, summarizeActions(c.memory.logs));
     });
 
     // ถ้าคุณมีระบบ compareModelPerformance แบบรวม:
-    const bestAgent = await compareMultipleModelPerformance(citizens);
-    if (bestAgent) {
+    const bestAgent = await saveModelPerformance(citizens,currentEpoch,epsilon);
+    await saveModel(citizens[0].model, `file://./model`);
+
+    if (epsilon <= 0.2 && bestAgent) {
       // ถ้าอยาก save model แยก per agent:
-      await saveModel(citizens[bestAgent.index].model, `file://./model`);
+      await saveModel(citizens[bestAgent.index].model, `file://./bestModel`);
+      console.log("-----------------[ Saved Best Model ]------------------")
+      console.log(`🏆 ${chalk.yellow("Best Model")}`)
+      console.log("--------------------------------------------------------")
+    }else{
+       console.log("-----------------[ Not Save ]------------------")
+      console.log(`🧨 ${chalk.yellow("Worst Model Or Low Epsilon")}`)
+      console.log("--------------------------------------------------------")
     }
+
     if(epoch < epochs-1 ){
       await waitWithSpinner('Waiting for next epoch...', 3000, '✅ Next epoch started!');
     }
+
+    currentEpoch += 1;
   }
     console.log('🏁 Simulation completed!');
+        // 📊 แสดงผลรวม
+        console.log("\n\n-----------Result-----------");
+        console.log("🤖 จบเรียบร้อยแล้ว");
+        console.log("📈 อายุรวมแต่ละรอบ:", sum);
+        console.log("🥇 Reward รวมแต่ละรอบ:", rewards);
+        console.log("📈 Age Avg.:", sum.reduce((a, b) => a + b, 0) / sum.length);
+        console.log(summarizeActions(citizens[0].memory.logs));
     resolve();
    })
 }
 
-
-train(50);
+train(8);
 
 

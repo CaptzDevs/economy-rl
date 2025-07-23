@@ -23,7 +23,9 @@ async function run(epochs = 3) {
    for (let epoch = 0; epoch < epochs; epoch++) {
 
     const sharedMemory = await loadShareMemory()
-    const trainedModel = await loadModel();
+    const loadBestTrainedModel =  await loadModel(`file://./bestModel`) 
+    const trainedModel = loadBestTrainedModel ?  loadBestTrainedModel : await loadModel() 
+
     const epsilon = 0
 
       for (const c of citizens) {
